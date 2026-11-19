@@ -13,7 +13,7 @@ window.PDM_CONFIG = {
   // URL Deployment Google Apps Script Web App (https://script.google.com/macros/s/.../exec)
   // Dapat diisi langsung di sini sebelum push ke GitHub Pages, atau diatur melalui
   // panel "Konfigurasi Koneksi Backend GAS" pada halaman Login / Pengaturan.
-  GAS_WEB_APP_URL: '',
+  https://script.google.com/macros/s/AKfycbxVsy9mcTXTX-v5Rul9IPyy4VTtH42uS-8k8nwnLql4DsAUHdA_fZKZw04MW-Sn0ndzmQ/exec: '',
 
   // Kunci penyimpanan lokal browser (hanya untuk token sesi, tema, dan URL endpoint GAS)
   STORAGE_KEYS: {
