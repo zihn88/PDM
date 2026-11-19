@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login — PERSONAL DOCUMENT MANAGER</title>
+  <link rel="icon" type="image/svg+xml" href="assets/images/logo.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+  <link rel="stylesheet" href="assets/css/responsive.css" />
+</head>
+<body class="login-body">
+
+  <div class="login-shell">
+    <!-- Left Showcase Column -->
+    <div class="login-showcase">
+      <div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
+          <img src="assets/images/logo.svg" alt="Logo" style="width:44px;height:44px;background:#fff;border-radius:12px;padding:4px;" />
+          <div>
+            <div style="font-weight:800;font-size:16px;letter-spacing:-0.01em;">PERSONAL DOCUMENT MANAGER</div>
+            <div style="font-size:12px;opacity:0.85;">Multi-User Cloud Storage &bull; Dual-Drive Auto Backup</div>
+          </div>
+        </div>
+
+        <h2 style="font-size:26px;font-weight:800;line-height:1.25;letter-spacing:-0.02em;">
+          Penyimpanan Dokumen Pribadi dengan Replikasi Otomatis Lintas Akun Google Drive.
+        </h2>
+        <p style="margin-top:12px;font-size:13.5px;opacity:0.9;line-height:1.6;">
+          Setiap dokumen yang Anda unggah ke <strong>Google Drive A</strong> secara otomatis diverifikasi checksum SHA-256 dan disalin satu arah ke <strong>Google Drive B</strong> (akun Google berbeda).
+        </p>
+
+        <div class="showcase-feature-list">
+          <div class="showcase-feature-item">
+            <div style="font-weight:800;font-size:16px;">01</div>
+            <div>
+              <div style="font-weight:700;font-size:13px;">One-Way Cross-Account Auto Backup</div>
+              <div style="font-size:12px;opacity:0.85;">Replikasi otomatis Drive A &rarr; Drive B dengan antrean retry &amp; verifikasi integritas.</div>
+            </div>
+          </div>
+          <div class="showcase-feature-item">
+            <div style="font-weight:800;font-size:16px;">02</div>
+            <div>
+              <div style="font-weight:700;font-size:13px;">Zero-Loss Archive Protection</div>
+              <div style="font-size:12px;opacity:0.85;">Saat dokumen utama diarsipkan di Drive A, salinan backup di Drive B tetap utuh dan tidak pernah terhapus otomatis.</div>
+            </div>
+          </div>
+          <div class="showcase-feature-item">
+            <div style="font-weight:800;font-size:16px;">03</div>
+            <div>
+              <div style="font-weight:700;font-size:13px;">Strict Role &amp; Ownership Isolation</div>
+              <div style="font-size:12px;opacity:0.85;">Setiap pengguna memiliki ruang dokumen pribadi terisolasi dengan validasi session di backend GAS.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="font-size:11.5px;opacity:0.8;margin-top:24px;display:flex;justify-content:space-between;align-items:center;">
+        <span>Secured with Salted SHA-256 &amp; Session Guard</span>
+        <span>v2.4.0 Enterprise</span>
+      </div>
+    </div>
+
+    <!-- Right Login Form Column -->
+    <div class="login-form-pane">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <div>
+          <h1 style="font-size:22px;font-weight:800;color:var(--text-primary);">Masuk ke Akun Anda</h1>
+          <p style="font-size:13px;color:var(--text-muted);margin-top:2px;">Masukkan kredensial untuk mengakses ruang penyimpanan</p>
+        </div>
+        <button type="button" id="loginThemeBtn" class="btn btn-secondary btn-sm" title="Ganti Tema">
+          Tema
+        </button>
+      </div>
+
+      <!-- Alert Box for Informative Error Messages -->
+      <div id="loginAlertBox" style="display:none;margin-bottom:16px;padding:12px 14px;border-radius:8px;background:var(--status-red-bg);border:1px solid var(--status-red-border);color:var(--status-red-text);font-size:13px;font-weight:600;"></div>
+
+      <form id="loginForm" autocomplete="off">
+        <div class="form-group">
+          <label class="form-label" for="usernameInput">Username</label>
+          <input type="text" id="usernameInput" class="form-control" placeholder="Masukkan username (contoh: admin atau muzakki)" required autofocus />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="passwordInput">Password</label>
+          <div class="password-input-wrap">
+            <input type="password" id="passwordInput" class="form-control" placeholder="Masukkan password Anda" style="padding-right:42px;" required />
+            <button type="button" id="togglePasswordBtn" class="password-toggle-btn" title="Tampilkan / Sembunyikan Password" aria-label="Tampilkan Password">
+              <svg id="eyeIconOpen" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg id="eyeIconClosed" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" id="loginSubmitBtn" class="btn btn-primary" style="width:100%;padding:11px;margin-top:8px;font-size:14px;">
+          <span>Masuk ke Aplikasi</span>
+        </button>
+      </form>
+
+      <!-- Quick Demo Credentials Selector (Memudahkan pengujian Administrator & Multi-User) -->
+      <div class="quick-demo-accounts">
+        <div style="font-size:11.5px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;">
+          Akses Cepat Pengujian Role (Klik untuk mengisi):
+        </div>
+        <div class="demo-chip-row">
+          <button type="button" class="demo-chip" data-user="admin" data-pass="Admin@123">
+            Admin (admin / Admin@123)
+          </button>
+          <button type="button" class="demo-chip" data-user="muzakki" data-pass="User@123">
+            User 1: Ahmad Muzakki (muzakki)
+          </button>
+          <button type="button" class="demo-chip" data-user="mubarok" data-pass="User@123">
+            User 2: Ahmad Mubarok (mubarok)
+          </button>
+        </div>
+      </div>
+
+      <!-- Backend GAS Endpoint Connection Settings -->
+      <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border-color);">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <span id="endpointStatusBadge" class="badge badge-green">
+            <span class="badge-dot"></span>Mode Siap Pakai
+          </span>
+          <button type="button" id="toggleEndpointConfigBtn" class="btn btn-ghost btn-sm" style="font-size:12px;">
+            Konfigurasi URL Backend GAS
+          </button>
+        </div>
+
+        <div id="endpointConfigDrawer" style="display:none;margin-top:12px;padding:12px;background:var(--bg-surface-alt);border-radius:8px;border:1px solid var(--border-color);">
+          <label class="form-label" for="gasUrlInput" style="font-size:12px;">URL Web App Google Apps Script (Akun A)</label>
+          <input type="url" id="gasUrlInput" class="form-control" placeholder="https://script.google.com/macros/s/.../exec" style="font-size:12px;margin-top:4px;" />
+          <div style="font-size:11px;color:var(--text-muted);margin-top:6px;">
+            Kosongkan jika ingin menjalankan <strong>Built-in Dual-Drive Sandbox Engine</strong>, atau tempelkan URL Web App GAS Anda untuk terhubung langsung ke Google Spreadsheet &amp; Google Drive asli.
+          </div>
+          <div style="display:flex;gap:8px;margin-top:10px;">
+            <button type="button" id="saveGasUrlBtn" class="btn btn-primary btn-sm">Simpan Endpoint</button>
+            <button type="button" id="useSandboxBtn" class="btn btn-secondary btn-sm">Gunakan Sandbox Lokal</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/auth.js"></script>
+  <script>
+    (function() {
+      PDM_AUTH.initTheme();
+
+      // Cek apakah sudah login
+      var existingToken = PDM_AUTH.getToken();
+      var urlParams = new URLSearchParams(window.location.search);
+      var redirectDocId = urlParams.get('doc') || '';
+
+      if (urlParams.get('expired') === '1') {
+        showAlert('Sesi Anda telah berakhir atau dicabut. Silakan login kembali.');
+      } else if (existingToken) {
+        window.location.href = redirectDocId ? ('index.html?doc=' + encodeURIComponent(redirectDocId)) : 'index.html';
+      }
+
+      function showAlert(msg, isSuccess) {
+        var box = document.getElementById('loginAlertBox');
+        box.style.display = 'block';
+        box.style.background = isSuccess ? 'var(--status-green-bg)' : 'var(--status-red-bg)';
+        box.style.borderColor = isSuccess ? 'var(--status-green-border)' : 'var(--status-red-border)';
+        box.style.color = isSuccess ? 'var(--status-green-text)' : 'var(--status-red-text)';
+        box.textContent = msg;
+      }
+
+      function refreshEndpointBadge() {
+        var badge = document.getElementById('endpointStatusBadge');
+        var input = document.getElementById('gasUrlInput');
+        var currentUrl = PDM_UTILS.getGasEndpointUrl();
+        input.value = currentUrl;
+        if (PDM_UTILS.isLiveGasMode()) {
+          badge.className = 'badge badge-green';
+          badge.innerHTML = '<span class="badge-dot"></span>Live GAS Backend Terhubung';
+        } else {
+          badge.className = 'badge badge-green';
+          badge.innerHTML = '<span class="badge-dot"></span>Dual-Drive Sandbox Engine Aktif';
+        }
+      }
+      refreshEndpointBadge();
+
+      document.getElementById('loginThemeBtn').addEventListener('click', function() {
+        PDM_AUTH.toggleTheme();
+      });
+
+      // Toggle Show/Hide Password
+      var passInput = document.getElementById('passwordInput');
+      var eyeOpen = document.getElementById('eyeIconOpen');
+      var eyeClosed = document.getElementById('eyeIconClosed');
+      document.getElementById('togglePasswordBtn').addEventListener('click', function() {
+        var isPass = passInput.type === 'password';
+        passInput.type = isPass ? 'text' : 'password';
+        eyeOpen.style.display = isPass ? 'none' : '';
+        eyeClosed.style.display = isPass ? '' : 'none';
+      });
+
+      // Quick Demo Chips
+      document.querySelectorAll('.demo-chip').forEach(function(chip) {
+        chip.addEventListener('click', function() {
+          document.getElementById('usernameInput').value = chip.getAttribute('data-user');
+          document.getElementById('passwordInput').value = chip.getAttribute('data-pass');
+          document.getElementById('loginAlertBox').style.display = 'none';
+        });
+      });
+
+      // Endpoint Config Drawer
+      document.getElementById('toggleEndpointConfigBtn').addEventListener('click', function() {
+        var dr = document.getElementById('endpointConfigDrawer');
+        dr.style.display = dr.style.display === 'none' ? 'block' : 'none';
+      });
+
+      document.getElementById('saveGasUrlBtn').addEventListener('click', function() {
+        var val = document.getElementById('gasUrlInput').value.trim();
+        PDM_UTILS.setGasEndpointUrl(val);
+        refreshEndpointBadge();
+        showAlert(val ? 'Endpoint Google Apps Script berhasil disimpan.' : 'Menggunakan Dual-Drive Sandbox Engine.', true);
+      });
+
+      document.getElementById('useSandboxBtn').addEventListener('click', function() {
+        PDM_UTILS.setGasEndpointUrl('');
+        refreshEndpointBadge();
+        showAlert('Beralih ke Dual-Drive Sandbox Engine lokal.', true);
+      });
+
+      // Login Form Submit
+      document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        var btn = document.getElementById('loginSubmitBtn');
+        var u = document.getElementById('usernameInput').value.trim();
+        var p = document.getElementById('passwordInput').value;
+
+        document.getElementById('loginAlertBox').style.display = 'none';
+        btn.disabled = true;
+        btn.innerHTML = '<span>Memverifikasi Kredensial &amp; Sesi...</span>';
+
+        try {
+          await PDM_AUTH.login(u, p);
+          window.location.href = redirectDocId ? ('index.html?doc=' + encodeURIComponent(redirectDocId)) : 'index.html';
+        } catch (err) {
+          showAlert(err.message || 'Gagal melakukan autentikasi.');
+          btn.disabled = false;
+          btn.innerHTML = '<span>Masuk ke Aplikasi</span>';
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PERSONAL DOCUMENT MANAGER — Cloud Document Storage &amp; Auto Backup</title>
+  <link rel="icon" type="image/svg+xml" href="assets/images/logo.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+  <link rel="stylesheet" href="assets/css/responsive.css" />
+</head>
+<body>
+
+  <div class="app-layout">
+    <!-- ====================================================================
+         SIDEBAR NAVIGATION
+         ==================================================================== -->
+    <aside class="sidebar" id="appSidebar">
+      <div class="sidebar-brand">
+        <img src="assets/images/logo.svg" alt="PDM Logo" />
+        <div class="brand-text">
+          <span class="brand-title">DOC MANAGER</span>
+          <span class="brand-subtitle">Dual-Drive Cloud Vault</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section-label">Menu Utama</div>
+
+        <button type="button" class="nav-item active" data-view="dashboard" onclick="PDM_AUTH.navigateTo('dashboard')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+          <span>Dashboard</span>
+        </button>
+
+        <button type="button" class="nav-item" data-view="my-documents" onclick="PDM_AUTH.navigateTo('my-documents')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <span>Dokumen Saya</span>
+          <span class="nav-badge" id="navMyDocsBadge">0</span>
+        </button>
+
+        <button type="button" class="nav-item" data-view="search" onclick="PDM_AUTH.navigateTo('search')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <span>Pencarian</span>
+        </button>
+
+        <button type="button" class="nav-item" data-view="upload" onclick="PDM_AUTH.navigateTo('upload')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <span>Upload Dokumen</span>
+        </button>
+
+        <button type="button" class="nav-item" data-view="archive" onclick="PDM_AUTH.navigateTo('archive')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+          <span>Arsip Dokumen</span>
+          <span class="nav-badge" id="navArchiveBadge">0</span>
+        </button>
+
+        <!-- Admin Only Section -->
+        <div class="nav-section-label admin-only">Administrasi Sistem</div>
+
+        <button type="button" class="nav-item admin-only" data-view="backup" onclick="PDM_AUTH.navigateTo('backup')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <span>Backup Center</span>
+        </button>
+
+        <button type="button" class="nav-item admin-only" data-view="users" onclick="PDM_AUTH.navigateTo('users')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span>Manajemen Pengguna</span>
+        </button>
+
+        <div class="nav-section-label">Konfigurasi</div>
+
+        <button type="button" class="nav-item" data-view="settings" onclick="PDM_AUTH.navigateTo('settings')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span>Pengaturan</span>
+        </button>
+      </nav>
+
+      <!-- Sidebar Footer: Profile, Theme Switcher, Logout -->
+      <div class="sidebar-footer">
+        <div class="user-profile-mini" onclick="PDM_AUTH.navigateTo('settings')" title="Lihat Profil &amp; Keamanan Akun">
+          <div class="avatar-circle" id="sidebarAvatar">AD</div>
+          <div class="user-info-mini">
+            <div class="user-name-mini" id="sidebarUserName">Memuat...</div>
+            <div class="user-role-mini" id="sidebarUserRole">...</div>
+          </div>
+        </div>
+
+        <div class="sidebar-footer-actions">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="PDM_AUTH.toggleTheme()">
+            <span id="themeToggleLabel">Mode Gelap</span>
+          </button>
+          <button type="button" class="btn btn-danger btn-sm" onclick="PDM_AUTH.logout()">
+            <span>Keluar</span>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ====================================================================
+         MAIN CONTENT WRAPPER
+         ==================================================================== -->
+    <div class="main-wrapper">
+      <!-- Topbar -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <button type="button" class="mobile-menu-btn" onclick="document.getElementById('appSidebar').classList.toggle('mobile-open')" aria-label="Menu">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+          <div class="page-heading">
+            <h1 id="topbarTitle">Dashboard</h1>
+            <p id="topbarSubtitle">Memuat ringkasan sistem...</p>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <div class="connection-pill" title="Status Koneksi Backend &amp; Replikasi Drive A/B">
+            <span class="pulse-dot" id="connectionPulseDot"></span>
+            <span class="pill-text" id="connectionModeText">Connected</span>
+          </div>
+          <button type="button" class="btn btn-primary btn-sm" onclick="PDM_AUTH.navigateTo('upload')">
+            + Upload
+          </button>
+        </div>
+      </header>
+
+      <!-- Main Views Container -->
+      <main class="content-area">
+
+        <!-- 1. VIEW: DASHBOARD -->
+        <section id="view-dashboard" class="view-section active">
+          <div id="dashboardContentContainer"></div>
+        </section>
+
+        <!-- 2. VIEW: DOKUMEN SAYA -->
+        <section id="view-my-documents" class="view-section">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Daftar Dokumen Aktif</div>
+                <div class="card-subtitle">Dokumen yang tersimpan di Google Drive A dan disinkronkan satu arah ke Google Drive B</div>
+              </div>
+              <button class="btn btn-primary btn-sm" onclick="PDM_AUTH.navigateTo('upload')">+ Upload Dokumen Baru</button>
+            </div>
+
+            <div class="filter-toolbar">
+              <div class="search-box">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" id="myDocsQuickSearch" class="form-control" placeholder="Cari cepat nama file atau ID dokumen..." oninput="PDM_DOCUMENTS.reloadCurrentMode()" />
+              </div>
+
+              <select id="myDocsCategoryFilter" class="form-control dynamic-category-select" data-include-all="true" style="width:auto;" onchange="PDM_DOCUMENTS.reloadCurrentMode()">
+                <option value="ALL">Semua Kategori</option>
+              </select>
+
+              <select id="myDocsFormatFilter" class="form-control" style="width:auto;" onchange="PDM_DOCUMENTS.reloadCurrentMode()">
+                <option value="ALL">Semua Format</option>
+                <option value="PDF">PDF</option>
+                <option value="JPG">JPG / JPEG</option>
+                <option value="PNG">PNG</option>
+              </select>
+
+              <button type="button" class="btn btn-secondary btn-sm" onclick="PDM_DOCUMENTS.openMyDocumentsView()">Segarkan</button>
+            </div>
+
+            <div id="myDocsTableContainer"></div>
+          </div>
+        </section>
+
+        <!-- 3. VIEW: PENCARIAN DOKUMEN -->
+        <section id="view-search" class="view-section">
+          <div class="card" style="margin-bottom:20px;">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Filter Pencarian Dokumen Multi-Kriteria</div>
+                <div class="card-subtitle">Temukan dokumen berdasarkan nama, kategori, format, tanggal upload, status backup, dan pemilik</div>
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;">
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">Kata Kunci Nama File / ID</label>
+                <input type="text" id="searchQueryInput" class="form-control" placeholder="Contoh: KTP, Ijazah, Paspor..." />
+              </div>
+
+              <div class="form-group admin-only" style="margin-bottom:0;">
+                <label class="form-label">Filter Nama Pemilik (Admin)</label>
+                <select id="searchOwnerSelect" class="form-control">
+                  <option value="ALL">Semua Pemilik</option>
+                </select>
+              </div>
+
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">Kategori</label>
+                <select id="searchCategorySelect" class="form-control dynamic-category-select" data-include-all="true">
+                  <option value="ALL">Semua Kategori</option>
+                </select>
+              </div>
+
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">Format File</label>
+                <select id="searchFormatSelect" class="form-control">
+                  <option value="ALL">Semua Format (PDF/JPG/PNG)</option>
+                  <option value="PDF">PDF</option>
+                  <option value="JPG">JPG / JPEG</option>
+                  <option value="PNG">PNG</option>
+                </select>
+              </div>
+
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">Status Backup Drive B</label>
+                <select id="searchBackupSelect" class="form-control">
+                  <option value="ALL">Semua Status Backup</option>
+                  <option value="SUCCESS">HIJAU — Backup Berhasil</option>
+                  <option value="PENDING">KUNING — Menunggu Backup</option>
+                  <option value="FAILED">MERAH — Backup Gagal</option>
+                  <option value="UNBACKED">ABU-ABU — Belum Dibackup</option>
+                </select>
+              </div>
+
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">Dari Tanggal Upload</label>
+                <input type="date" id="searchDateFrom" class="form-control" />
+              </div>
+
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">Sampai Tanggal Upload</label>
+                <input type="date" id="searchDateTo" class="form-control" />
+              </div>
+
+              <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">Baris per Halaman</label>
+                <select id="searchLimitSelect" class="form-control">
+                  <option value="10">10 baris</option>
+                  <option value="25">25 baris</option>
+                  <option value="50">50 baris</option>
+                  <option value="100">100 baris</option>
+                </select>
+              </div>
+            </div>
+
+            <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px;">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('searchQueryInput').value='';document.getElementById('searchDateFrom').value='';document.getElementById('searchDateTo').value='';PDM_DOCUMENTS.runAdvancedSearch(1);">Reset Filter</button>
+              <button type="button" class="btn btn-primary btn-sm" onclick="PDM_DOCUMENTS.runAdvancedSearch(1)">Terapkan Pencarian</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div id="searchResultsTableContainer"></div>
+          </div>
+        </section>
+
+        <!-- 4. VIEW: UPLOAD DOKUMEN -->
+        <section id="view-upload" class="view-section">
+          <div class="dashboard-row">
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">Unggah Dokumen ke Google Drive A + Auto-Backup Drive B</div>
+                  <div class="card-subtitle">Format didukung: PDF, JPG, JPEG, PNG (Validasi Magic Bytes &amp; Checksum SHA-256)</div>
+                </div>
+              </div>
+
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:16px;">
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label">Pemilik Dokumen (Otomatis dari Session)</label>
+                  <input type="text" id="uploadOwnerReadonly" class="form-control" readonly style="background:var(--bg-surface-alt);font-weight:700;" />
+                </div>
+
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label">Kategori Folder</label>
+                  <select id="uploadCategorySelect" class="form-control dynamic-category-select">
+                    <option value="IDENTITAS">IDENTITAS</option>
+                    <option value="PENDIDIKAN">PENDIDIKAN</option>
+                    <option value="KELUARGA">KELUARGA</option>
+                    <option value="DOKUMEN LAINNYA">DOKUMEN LAINNYA</option>
+                  </select>
+                </div>
+
+                <div class="form-group" style="margin-bottom:0;">
+                  <label class="form-label">Catatan / Deskripsi (Opsional)</label>
+                  <input type="text" id="uploadDescriptionInput" class="form-control" placeholder="Keterangan singkat dokumen..." />
+                </div>
+              </div>
+
+              <!-- Drag and Drop Area -->
+              <div class="upload-dropzone" id="uploadDropzone">
+                <div class="dropzone-icon">
+                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                </div>
+                <h3 style="font-size:16px;font-weight:800;color:var(--text-primary);">Tarik &amp; Lepaskan File di Sini, atau Klik untuk Memilih</h3>
+                <p style="font-size:12.5px;color:var(--text-secondary);margin-top:4px;">
+                  Mendukung multi-file <strong>.PDF, .JPG, .JPEG, .PNG</strong> hingga 15 MB per file
+                </p>
+                <input type="file" id="uploadFileInput" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" multiple style="display:none;" />
+              </div>
+
+              <div>
+                <div style="font-size:13px;font-weight:700;margin-bottom:10px;">Status &amp; Antrean Proses Upload:</div>
+                <div id="uploadQueueContainer" class="upload-queue-list"></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">Simulasi Struktur Folder Otomatis</div>
+                  <div class="card-subtitle">User tidak dapat memilih folder pengguna lain</div>
+                </div>
+              </div>
+
+              <div style="padding:14px;background:var(--bg-surface-alt);border-radius:10px;border:1px solid var(--border-color);margin-bottom:14px;">
+                <div style="font-size:11px;font-weight:800;color:var(--primary-600);text-transform:uppercase;">1. Lokasi Simpan Utama (Google Drive A)</div>
+                <div style="font-family:monospace;font-size:12.5px;font-weight:700;margin-top:6px;word-break:break-all;" id="uploadTargetFolderPreview">
+                  PERSONAL DOCUMENTS / ...
+                </div>
+              </div>
+
+              <div style="padding:14px;background:var(--status-green-bg);border-radius:10px;border:1px solid var(--status-green-border);margin-bottom:16px;">
+                <div style="font-size:11px;font-weight:800;color:var(--status-green-text);text-transform:uppercase;">2. Lokasi Auto-Backup Satu Arah (Google Drive B)</div>
+                <div style="font-family:monospace;font-size:12.5px;font-weight:700;margin-top:6px;word-break:break-all;color:var(--status-green-text);" id="uploadBackupFolderPreview">
+                  PERSONAL DOCUMENTS BACKUP / ...
+                </div>
+              </div>
+
+              <div style="font-size:12px;color:var(--text-secondary);line-height:1.6;">
+                <strong>Jaminan Keandalan Upload:</strong>
+                <ul style="padding-left:18px;margin-top:6px;">
+                  <li>Jika koneksi ke Drive B sedang sibuk, file utama di Drive A <strong>tetap tersimpan 100%</strong>.</li>
+                  <li>Anda tidak perlu mengunggah ulang file utama; cukup tekan tombol <strong>"Ulangi Backup Saja"</strong> atau biarkan Time-Driven Trigger 5 menit menyelesaikan salinan ke Drive B.</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 5. VIEW: ARSIP DOKUMEN -->
+        <section id="view-archive" class="view-section">
+          <div class="card" style="margin-bottom:16px;border-left:4px solid #f59e0b;">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+              <div>
+                <div style="font-weight:800;font-size:14px;">Prinsip Perlindungan Arsip: Primary File Diarsipkan, Backup Drive B Tetap Utuh</div>
+                <div style="font-size:12.5px;color:var(--text-secondary);margin-top:2px;">
+                  Dokumen di bawah ini dipindahkan ke Folder Arsip Google Drive A dan disembunyikan dari daftar aktif. Salinan cadangan di Google Drive B <strong>tidak pernah dihapus otomatis</strong>.
+                </div>
+              </div>
+              <input type="text" id="archiveQuickSearch" class="form-control" style="max-width:260px;" placeholder="Cari dokumen di arsip..." oninput="PDM_DOCUMENTS.openArchiveView()" />
+            </div>
+          </div>
+
+          <div class="card">
+            <div id="archiveTableContainer"></div>
+          </div>
+        </section>
+
+        <!-- 6. VIEW: DETAIL & PREVIEW DOKUMEN -->
+        <section id="view-preview" class="view-section">
+          <div class="preview-split-layout">
+            <!-- Left: PDF / Image Viewer -->
+            <div class="viewer-frame-card">
+              <div class="viewer-toolbar">
+                <div style="font-weight:700;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" id="previewToolbarFileName">
+                  Pratinjau Dokumen
+                </div>
+                <div id="previewZoomControls" style="display:flex;align-items:center;gap:6px;"></div>
+              </div>
+              <div class="viewer-canvas-stage" id="previewCanvasStage"></div>
+            </div>
+
+            <!-- Right: Metadata & Authenticated QR -->
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">Rincian Metadata &amp; Status Backup</div>
+                  <div class="card-subtitle">Terverifikasi kepemilikan &amp; integritas SHA-256</div>
+                </div>
+              </div>
+              <div id="previewMetadataContainer"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 7. VIEW: BACKUP CENTER (ADMIN ONLY) -->
+        <section id="view-backup" class="view-section">
+          <div id="backupCenterContainer"></div>
+        </section>
+
+        <!-- 8. VIEW: MANAJEMEN PENGGUNA (ADMIN ONLY) -->
+        <section id="view-users" class="view-section">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Daftar Akun Pengguna Sistem</div>
+                <div class="card-subtitle">Kelola akses pengguna, ruang folder Drive A &amp; Drive B, status aktif, dan reset password</div>
+              </div>
+              <button type="button" class="btn btn-primary btn-sm" onclick="PDM_USERS.openCreateUserModal()">+ Tambah Pengguna</button>
+            </div>
+            <div id="usersTableContainer"></div>
+          </div>
+        </section>
+
+        <!-- 9. VIEW: PENGATURAN -->
+        <section id="view-settings" class="view-section">
+          <!-- Admin Only: Drive A & Drive B Integration Configuration -->
+          <div class="card admin-only" style="margin-bottom:20px;">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Status Kesehatan Infrastruktur &amp; Time-Driven Trigger (Admin)</div>
+                <div class="card-subtitle">Monitor real-time Google Drive A, Google Drive B, Trigger 5 Menit, dan 8 Sheet Spreadsheet</div>
+              </div>
+              <button type="button" class="btn btn-primary btn-sm" onclick="PDM_SETTINGS.testDriveConnections()">Uji Koneksi Drive A &amp; Drive B</button>
+            </div>
+            <div id="adminSystemHealthBox" style="margin-bottom:20px;"></div>
+
+            <form onsubmit="PDM_SETTINGS.saveAdminDriveSettings(event)">
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;">
+                <div class="form-group">
+                  <label class="form-label">ID Folder Utama Google Drive A (Primary)</label>
+                  <input type="text" id="cfgDriveARootId" class="form-control" placeholder="Otomatis dibuat jika dikosongkan" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">ID Folder Arsip Google Drive A</label>
+                  <input type="text" id="cfgDriveAArchiveId" class="form-control" placeholder="Otomatis dibuat jika dikosongkan" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Metode Integrasi Lintas Akun (Drive A &rarr; Drive B)</label>
+                  <select id="cfgBackupMode" class="form-control">
+                    <option value="BRIDGE">MODE 1: Dual-GAS Bridge (100% Kepemilikan &amp; Kuota Akun B)</option>
+                    <option value="SHARED_FOLDER">MODE 2: Delegasi Shared Folder Drive B ke Akun A</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Email Akun Google Drive B (Backup Account)</label>
+                  <input type="email" id="cfgDriveBAccountEmail" class="form-control" placeholder="akun.backup.drive.b@gmail.com" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">ID Folder Root Drive B (Untuk Mode Shared Folder)</label>
+                  <input type="text" id="cfgDriveBRootId" class="form-control" placeholder="ID Folder PERSONAL DOCUMENTS BACKUP di Drive B" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">URL Web App Receiver Akun B (Untuk Mode Bridge)</label>
+                  <input type="text" id="cfgDriveBBridgeUrl" class="form-control" placeholder="https://script.google.com/macros/s/.../exec" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">HMAC Shared Secret (Drive A &harr; Drive B Bridge)</label>
+                  <input type="text" id="cfgDriveBBridgeSecret" class="form-control" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Batas Ukuran Upload Maksimal (MB)</label>
+                  <input type="number" id="cfgMaxFileSizeMb" class="form-control" min="1" max="50" value="15" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Auto-Backup Langsung Saat Upload</label>
+                  <select id="cfgAutoBackupOnUpload" class="form-control">
+                    <option value="TRUE">Aktif (Langsung Copy ke Drive B + Fallback Queue)</option>
+                    <option value="FALSE">Hanya Melalui Background Queue Trigger 5 Menit</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Izinkan User Membuat Kategori Pribadi</label>
+                  <select id="cfgAllowUserCategory" class="form-control">
+                    <option value="TRUE">Diizinkan</option>
+                    <option value="FALSE">Hanya Kategori Global Admin</option>
+                  </select>
+                </div>
+              </div>
+              <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+                <button type="submit" class="btn btn-primary">Simpan Konfigurasi Drive A &amp; Drive B</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Kategori Dokumen Management -->
+          <div class="card" style="margin-bottom:20px;">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Manajemen Kategori Folder Dokumen</div>
+                <div class="card-subtitle">Digunakan sebagai nama subfolder otomatis di dalam folder pengguna pada Drive A dan Drive B</div>
+              </div>
+            </div>
+            <form onsubmit="PDM_SETTINGS.addCategory(event)" style="display:flex;gap:10px;margin-bottom:16px;max-width:460px;">
+              <input type="text" id="newCategoryNameInput" class="form-control" placeholder="Nama kategori baru (misal: SERTIFIKAT, PAJAK)" required />
+              <button type="submit" class="btn btn-primary">Tambah Kategori</button>
+            </form>
+            <div id="settingsCategoriesList"></div>
+          </div>
+
+          <!-- Profil, Ganti Password, & Koneksi Endpoint GAS -->
+          <div class="dashboard-row">
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">Profil &amp; Keamanan Password</div>
+                  <div class="card-subtitle">Password disimpan dengan Iterated Salted SHA-256</div>
+                </div>
+              </div>
+              <form onsubmit="PDM_SETTINGS.changeOwnPassword(event)">
+                <div class="form-group">
+                  <label class="form-label">Nama Lengkap</label>
+                  <input type="text" id="settingsProfileName" class="form-control" readonly style="background:var(--bg-surface-alt);" />
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                  <div class="form-group">
+                    <label class="form-label">Username</label>
+                    <input type="text" id="settingsProfileUsername" class="form-control" readonly style="background:var(--bg-surface-alt);" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Role Akses</label>
+                    <input type="text" id="settingsProfileRole" class="form-control" readonly style="background:var(--bg-surface-alt);" />
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Password Saat Ini</label>
+                  <input type="password" id="changePassCurrent" class="form-control" required />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Password Baru (Minimal 6 karakter)</label>
+                  <input type="password" id="changePassNew" class="form-control" required minlength="6" />
+                </div>
+                <button type="submit" class="btn btn-primary">Perbarui Password</button>
+              </form>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <div>
+                  <div class="card-title">Koneksi Endpoint Backend Google Apps Script</div>
+                  <div class="card-subtitle">Hubungkan Frontend GitHub ini ke deployment GAS Web App Anda</div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">URL Web App Google Apps Script (Akun A)</label>
+                <input type="url" id="settingsGasEndpointInput" class="form-control" placeholder="https://script.google.com/macros/s/.../exec" />
+              </div>
+              <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px;">
+                Frontend GitHub tidak pernah menyimpan kredensial Google. Seluruh operasi autentikasi, database Spreadsheet, serta pembacaan/penulisan Drive A &amp; Drive B dieksekusi di sisi server GAS.
+              </p>
+              <div style="display:flex;gap:8px;">
+                <button type="button" class="btn btn-primary" onclick="PDM_SETTINGS.saveFrontendGasEndpoint()">Simpan URL Endpoint</button>
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('settingsGasEndpointInput').value='';PDM_SETTINGS.saveFrontendGasEndpoint();">Gunakan Sandbox Lokal</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ======================================================================
+       MODALS
+       ====================================================================== -->
+
+  <!-- 1. Modal Edit Metadata Dokumen -->
+  <div class="modal-backdrop" id="editMetadataModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>Edit Metadata Dokumen</h3>
+        <button type="button" class="btn-ghost btn-sm" onclick="document.getElementById('editMetadataModal').classList.remove('open')">&times;</button>
+      </div>
+      <form onsubmit="PDM_DOCUMENTS.saveMetadataChanges(event)">
+        <div class="modal-body">
+          <input type="hidden" id="editMetaDocId" />
+          <div class="form-group">
+            <label class="form-label">Nama File</label>
+            <input type="text" id="editMetaFileName" class="form-control" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Kategori Folder</label>
+            <select id="editMetaCategory" class="form-control dynamic-category-select"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Deskripsi / Catatan</label>
+            <textarea id="editMetaDescription" class="form-control" rows="3"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="document.getElementById('editMetadataModal').classList.remove('open')">Batal</button>
+          <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 2. Modal Konfirmasi Arsipkan Dokumen -->
+  <div class="modal-backdrop" id="archiveConfirmModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>Arsipkan Dokumen</h3>
+        <button type="button" class="btn-ghost btn-sm" onclick="document.getElementById('archiveConfirmModal').classList.remove('open')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="archiveConfirmDocId" />
+        <p style="font-size:13.5px;margin-bottom:12px;">
+          Anda akan mengarsipkan dokumen <strong id="archiveConfirmFileName"></strong>.
+        </p>
+        <div style="padding:12px;border-radius:8px;background:var(--status-green-bg);border:1px solid var(--status-green-border);color:var(--status-green-text);font-size:12.5px;margin-bottom:14px;">
+          <strong>Jaminan Keamanan Backup:</strong> File utama akan dipindahkan ke folder Arsip di Google Drive A, sedangkan <strong>salinan cadangan di Google Drive B TETAP UTUH dan tidak akan dihapus</strong>.
+        </div>
+        <div class="form-group">
+          <label class="form-label">Alasan Pengarsipan</label>
+          <input type="text" id="archiveReasonInput" class="form-control" value="Diarsipkan oleh pengguna" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('archiveConfirmModal').classList.remove('open')">Batal</button>
+        <button type="button" class="btn btn-warning" onclick="PDM_DOCUMENTS.executeArchiveDocument()">Ya, Arsipkan Dokumen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. Modal Hapus Permanen (Admin Only) -->
+  <div class="modal-backdrop" id="permanentDeleteModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 style="color:var(--status-red-text);">Hapus Permanen File Utama (Khusus Admin)</h3>
+        <button type="button" class="btn-ghost btn-sm" onclick="document.getElementById('permanentDeleteModal').classList.remove('open')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="permDeleteDocId" />
+        <p style="font-size:13px;margin-bottom:12px;">
+          Tindakan ini akan menghapus permanen file utama <strong id="permDeleteFileName"></strong> dari Google Drive A dan mencatatnya ke dalam log audit. (Salinan backup di Google Drive B tetap dipertahankan sesuai kebijakan retensi).
+        </p>
+        <div class="form-group">
+          <label class="form-label">Alasan Penghapusan Permanen (Wajib Audit)</label>
+          <input type="text" id="permDeleteReasonInput" class="form-control" placeholder="Contoh: Permintaan pembersihan dokumen duplikat" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ketik <code>HAPUS PERMANEN</code> untuk mengonfirmasi:</label>
+          <input type="text" id="permDeleteConfirmInput" class="form-control" placeholder="HAPUS PERMANEN" required />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="document.getElementById('permanentDeleteModal').classList.remove('open')">Batal</button>
+        <button type="button" class="btn btn-danger" onclick="PDM_DOCUMENTS.executePermanentDelete()">Hapus Permanen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. Modal Tambah / Edit Pengguna (Admin Only) -->
+  <div class="modal-backdrop" id="userFormModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 id="userFormModalTitle">Tambah Pengguna</h3>
+        <button type="button" class="btn-ghost btn-sm" onclick="document.getElementById('userFormModal').classList.remove('open')">&times;</button>
+      </div>
+      <form onsubmit="PDM_USERS.saveUserForm(event)">
+        <div class="modal-body">
+          <input type="hidden" id="userFormMode" value="CREATE" />
+          <input type="hidden" id="userFormUserId" value="" />
+          <div class="form-group">
+            <label class="form-label">Nama Lengkap (Menjadi Nama Folder di Drive A &amp; Drive B)</label>
+            <input type="text" id="userFormNama" class="form-control" placeholder="Contoh: AHMAD MUZAKKI" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Username Login</label>
+            <input type="text" id="userFormUsername" class="form-control" placeholder="Contoh: muzakki" required />
+          </div>
+          <div class="form-group" id="userFormPasswordGroup">
+            <label class="form-label">Password Awal (Minimal 6 karakter)</label>
+            <input type="password" id="userFormPassword" class="form-control" placeholder="Minimal 6 karakter" />
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div class="form-group">
+              <label class="form-label">Role Hak Akses</label>
+              <select id="userFormRole" class="form-control">
+                <option value="USER">USER (Ruang Pribadi)</option>
+                <option value="ADMIN">ADMIN (Akses Penuh)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Status Akun</label>
+              <select id="userFormStatus" class="form-control">
+                <option value="ACTIVE">ACTIVE</option>
+                <option value="INACTIVE">INACTIVE</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="document.getElementById('userFormModal').classList.remove('open')">Batal</button>
+          <button type="submit" class="btn btn-primary">Simpan Pengguna</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 5. Modal Reset Password Pengguna (Admin Only) -->
+  <div class="modal-backdrop" id="resetPasswordModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>Reset Password Pengguna</h3>
+        <button type="button" class="btn-ghost btn-sm" onclick="document.getElementById('resetPasswordModal').classList.remove('open')">&times;</button>
+      </div>
+      <form onsubmit="PDM_USERS.executeResetPassword(event)">
+        <div class="modal-body">
+          <input type="hidden" id="resetPassUserId" />
+          <p style="font-size:13px;margin-bottom:14px;">
+            Masukkan password baru untuk pengguna <strong id="resetPassUserName"></strong>. Seluruh sesi aktif pengguna tersebut akan dicabut dan password disimpan dalam bentuk Salted SHA-256 Hash.
+          </p>
+          <div class="form-group">
+            <label class="form-label">Password Baru</label>
+            <input type="password" id="resetPassNewInput" class="form-control" required minlength="6" placeholder="Minimal 6 karakter" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="document.getElementById('resetPasswordModal').classList.remove('open')">Batal</button>
+          <button type="submit" class="btn btn-primary">Simpan Password Baru</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="assets/js/config.js"></script>
+  <script src="assets/js/api.js"></script>
+  <script src="assets/js/auth.js"></script>
+  <script src="assets/js/dashboard.js"></script>
+  <script src="assets/js/documents.js"></script>
+  <script src="assets/js/upload.js"></script>
+  <script src="assets/js/preview.js"></script>
+  <script src="assets/js/backup.js"></script>
+  <script src="assets/js/users.js"></script>
+  <script src="assets/js/settings.js"></script>
+  <script>
+    (async function() {
+      var user = await PDM_AUTH.guardMainApp();
+      if (!user) return;
+
+      // Cek apakah dibuka dari QR Code Terautentikasi (?doc=DocumentID)
+      var params = new URLSearchParams(window.location.search);
+      var targetDocId = params.get('doc');
+      if (targetDocId) {
+        PDM_AUTH.navigateTo('preview', { documentId: targetDocId, returnView: 'dashboard' });
+      } else {
+        PDM_AUTH.navigateTo('dashboard');
+      }
+    })();
+  </script>
+</body>
+</html>

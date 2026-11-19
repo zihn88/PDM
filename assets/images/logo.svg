@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="pdmGrad" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#4F46E5"/>
+      <stop offset="50%" stop-color="#6366F1"/>
+      <stop offset="100%" stop-color="#7C3AED"/>
+    </linearGradient>
+    <linearGradient id="shieldGrad" x1="20" y1="16" x2="48" y2="52" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.98"/>
+      <stop offset="100%" stop-color="#E0E7FF" stop-opacity="0.9"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="56" height="56" rx="16" fill="url(#pdmGrad)"/>
+  <path d="M22 16H36L44 24V44C44 46.2091 42.2091 48 40 48H22C19.7909 48 18 46.2091 18 44V20C18 17.7909 19.7909 16 22 16Z" fill="url(#shieldGrad)"/>
+  <path d="M36 16V22C36 23.1046 36.8954 24 38 24H44" fill="#C7D2FE"/>
+  <path d="M24 30H38M24 35H34M24 40H30" stroke="#4F46E5" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="43" cy="43" r="10" fill="#10B981" stroke="#FFFFFF" stroke-width="2.5"/>
+  <path d="M39 43L41.8 45.8L47.5 40" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

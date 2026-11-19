@@ -1,0 +1,88 @@
+/* ============================================================================
+ * PERSONAL DOCUMENT MANAGER - RESPONSIVE BREAKPOINTS (responsive.css)
+ * Desktop, Tablet, and Mobile Adaptations
+ * ============================================================================ */
+
+@media (max-width: 1140px) {
+  .dashboard-row {
+    grid-template-columns: 1fr;
+  }
+
+  .preview-split-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 920px) {
+  .sidebar {
+    transform: translateX(-100%);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .main-wrapper {
+    margin-left: 0;
+  }
+
+  .mobile-menu-btn {
+    display: inline-flex;
+  }
+
+  .drive-status-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .login-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .login-showcase {
+    padding: 28px 24px;
+  }
+
+  .login-form-pane {
+    padding: 28px 24px;
+  }
+}
+
+@media (max-width: 640px) {
+  .topbar {
+    padding: 0 16px;
+  }
+
+  .content-area {
+    padding: 18px 16px 40px;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .dual-progress-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .connection-pill span.pill-text {
+    display: none;
+  }
+
+  .filter-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .pagination-bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 420px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
