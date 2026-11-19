@@ -1,20 +1,24 @@
 /* ============================================================================
  * PERSONAL DOCUMENT MANAGER - RESPONSIVE BREAKPOINTS (responsive.css)
- * Desktop, Tablet, and Mobile Adaptations (Mobile Overflow Fix)
+ * Desktop, Tablet, and Mobile Adaptations
  * ============================================================================ */
 
-/* Cegah horizontal scroll / layar terpotong di semua ukuran */
+/* Perbaikan tinggi halaman agar konten (khususnya halaman login) tidak terpotong di atas */
 html, body {
-  max-width: 100%;
-  overflow-x: hidden;
+  height: auto;
+  min-height: 100%;
+  overflow-x: clip;
 }
 
-.app-layout,
-.main-wrapper,
-.content-area,
-.card {
-  max-width: 100%;
-  min-width: 0;
+.login-body {
+  height: auto;
+  min-height: 100vh;
+  min-height: 100dvh;
+  align-items: flex-start;
+}
+
+.login-shell {
+  margin: auto;
 }
 
 @media (max-width: 1140px) {
@@ -31,7 +35,7 @@ html, body {
   .sidebar {
     transform: translateX(-100%);
     box-shadow: var(--shadow-lg);
-    max-width: 85vw; /* Pastikan sidebar tidak lebih lebar dari layar HP */
+    max-width: 85vw;
   }
 
   .sidebar.mobile-open {
@@ -41,6 +45,7 @@ html, body {
   .main-wrapper {
     margin-left: 0;
     width: 100%;
+    min-width: 0;
   }
 
   .mobile-menu-btn {
@@ -67,7 +72,7 @@ html, body {
 
 @media (max-width: 640px) {
   .topbar {
-    padding: 10px 14px;
+    padding: 10px 16px;
     height: auto;
     min-height: var(--topbar-height);
     gap: 10px;
@@ -97,19 +102,21 @@ html, body {
   }
 
   .topbar-right {
-    gap: 8px;
     flex-shrink: 0;
+    gap: 8px;
   }
 
   .content-area {
-    padding: 16px 12px 40px;
+    padding: 18px 16px 40px;
+    max-width: 100%;
+    min-width: 0;
   }
 
   .card {
-    padding: 16px;
+    max-width: 100%;
+    min-width: 0;
   }
 
-  /* Izinkan header card & toolbar turun ke baris baru agar tidak terpotong */
   .card-header,
   .viewer-toolbar,
   .drive-card-top,
@@ -120,33 +127,15 @@ html, body {
 
   .stats-grid {
     grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
-
-  .stat-card {
-    padding: 14px;
-    gap: 8px;
+    gap: 12px;
   }
 
   .stat-info {
     min-width: 0;
   }
 
-  .stat-value {
-    font-size: 20px;
-  }
-
-  .stat-icon {
-    width: 36px;
-    height: 36px;
-  }
-
   .dual-progress-grid {
     grid-template-columns: 1fr;
-  }
-
-  .connection-pill {
-    padding: 6px 10px;
   }
 
   .connection-pill span.pill-text {
@@ -156,7 +145,6 @@ html, body {
   .filter-toolbar {
     flex-direction: column;
     align-items: stretch;
-    padding: 12px;
   }
 
   .filter-toolbar .search-box {
@@ -169,7 +157,6 @@ html, body {
     align-items: flex-start;
   }
 
-  /* Preview & QR agar muat di layar HP */
   .viewer-frame-card {
     min-height: 380px;
   }
@@ -189,7 +176,6 @@ html, body {
     text-align: center;
   }
 
-  /* Toast & Login */
   .toast-container {
     left: 12px;
     right: 12px;
@@ -198,7 +184,7 @@ html, body {
   }
 
   .login-body {
-    padding: 12px;
+    padding: 16px 12px;
   }
 
   .login-showcase,
