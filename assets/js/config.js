@@ -10,15 +10,15 @@ window.PDM_CONFIG = {
   APP_SUBTITLE: 'Multi-User Cloud Storage & Dual-Drive Auto Backup',
   VERSION: '2.4.0',
 
-  // URL Deployment Google Apps Script Web App (https://script.google.com/macros/s/.../exec)
-  // Dapat diisi langsung di sini sebelum push ke GitHub Pages, atau diatur melalui
-  // panel "Konfigurasi Koneksi Backend GAS" pada halaman Login / Pengaturan.
+  // ==========================================================================
+  // URL ENDPOINT BACKEND GOOGLE APPS SCRIPT (HARDCODED DI SINI, TIDAK DI UI PUBLIK)
+  // ==========================================================================
+  // Tempelkan URL Web App Google Apps Script (Akun A) Anda di bawah ini
+  // Contoh: 'https://script.google.com/macros/s/AKfycbxVsy9mcTXTX.../exec'
   GAS_WEB_APP_URL: 'https://script.google.com/macros/s/AKfycbxVsy9mcTXTX-v5Rul9IPyy4VTtH42uS-8k8nwnLql4DsAUHdA_fZKZw04MW-Sn0ndzmQ/exec',
 
-  // Kunci penyimpanan lokal browser (hanya untuk token sesi, tema, dan URL endpoint GAS)
+  // Kunci penyimpanan lokal browser (hanya untuk token sesi dan tema UI)
   STORAGE_KEYS: {
-    GAS_URL: 'pdm_gas_endpoint_url',
-    CONNECTION_MODE: 'pdm_connection_mode', // 'LIVE_GAS' atau 'LOCAL_EMULATOR'
     SESSION_TOKEN: 'pdm_session_token',
     SESSION_USER: 'pdm_session_user',
     THEME: 'pdm_ui_theme',
@@ -37,25 +37,15 @@ window.PDM_CONFIG = {
 window.PDM_UTILS = {
 
   getGasEndpointUrl: function() {
-    var saved = localStorage.getItem(PDM_CONFIG.STORAGE_KEYS.GAS_URL);
-    return (saved && saved.trim()) ? saved.trim() : PDM_CONFIG.GAS_WEB_APP_URL;
-  },
-
-  setGasEndpointUrl: function(url) {
-    var clean = String(url || '').trim();
-    if (clean) {
-      localStorage.setItem(PDM_CONFIG.STORAGE_KEYS.GAS_URL, clean);
-      localStorage.setItem(PDM_CONFIG.STORAGE_KEYS.CONNECTION_MODE, 'LIVE_GAS');
-    } else {
-      localStorage.removeItem(PDM_CONFIG.STORAGE_KEYS.GAS_URL);
-      localStorage.setItem(PDM_CONFIG.STORAGE_KEYS.CONNECTION_MODE, 'LOCAL_EMULATOR');
-    }
+    var configured = String(PDM_CONFIG.GAS_WEB_APP_URL || '').trim();
+    if (configured) return configured;
+    // Fallback baca dari localStorage hanya jika pernah disimpan sebelumnya oleh developer
+    var saved = localStorage.getItem('pdm_gas_endpoint_url');
+    return (saved && saved.trim()) ? saved.trim() : '';
   },
 
   isLiveGasMode: function() {
-    var url = this.getGasEndpointUrl();
-    var mode = localStorage.getItem(PDM_CONFIG.STORAGE_KEYS.CONNECTION_MODE);
-    return Boolean(url && mode !== 'LOCAL_EMULATOR');
+    return Boolean(this.getGasEndpointUrl());
   },
 
   formatBytes: function(bytes) {
