@@ -100,30 +100,6 @@
         </button>
       </form>
 
-      <!-- Backend GAS Endpoint Connection Settings -->
-      <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border-color);">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-          <span id="endpointStatusBadge" class="badge badge-green">
-            <span class="badge-dot"></span>Mode Siap Pakai
-          </span>
-          <button type="button" id="toggleEndpointConfigBtn" class="btn btn-ghost btn-sm" style="font-size:12px;">
-            Konfigurasi URL Backend GAS
-          </button>
-        </div>
-
-        <div id="endpointConfigDrawer" style="display:none;margin-top:12px;padding:12px;background:var(--bg-surface-alt);border-radius:8px;border:1px solid var(--border-color);">
-          <label class="form-label" for="gasUrlInput" style="font-size:12px;">URL Web App Google Apps Script (Akun A)</label>
-          <input type="url" id="gasUrlInput" class="form-control" placeholder="https://script.google.com/macros/s/.../exec" style="font-size:12px;margin-top:4px;" />
-          <div style="font-size:11px;color:var(--text-muted);margin-top:6px;">
-            Kosongkan jika ingin menjalankan <strong>Built-in Dual-Drive Sandbox Engine</strong>, atau tempelkan URL Web App GAS Anda untuk terhubung langsung ke Google Spreadsheet &amp; Google Drive asli.
-          </div>
-          <div style="display:flex;gap:8px;margin-top:10px;">
-            <button type="button" id="saveGasUrlBtn" class="btn btn-primary btn-sm">Simpan Endpoint</button>
-            <button type="button" id="useSandboxBtn" class="btn btn-secondary btn-sm">Gunakan Sandbox Lokal</button>
-          </div>
-        </div>
-      </div>
-
     </div>
   </div>
 
@@ -154,21 +130,6 @@
         box.textContent = msg;
       }
 
-      function refreshEndpointBadge() {
-        var badge = document.getElementById('endpointStatusBadge');
-        var input = document.getElementById('gasUrlInput');
-        var currentUrl = PDM_UTILS.getGasEndpointUrl();
-        input.value = currentUrl;
-        if (PDM_UTILS.isLiveGasMode()) {
-          badge.className = 'badge badge-green';
-          badge.innerHTML = '<span class="badge-dot"></span>Live GAS Backend Terhubung';
-        } else {
-          badge.className = 'badge badge-green';
-          badge.innerHTML = '<span class="badge-dot"></span>Dual-Drive Sandbox Engine Aktif';
-        }
-      }
-      refreshEndpointBadge();
-
       document.getElementById('loginThemeBtn').addEventListener('click', function() {
         PDM_AUTH.toggleTheme();
       });
@@ -182,25 +143,6 @@
         passInput.type = isPass ? 'text' : 'password';
         eyeOpen.style.display = isPass ? 'none' : '';
         eyeClosed.style.display = isPass ? '' : 'none';
-      });
-
-      // Endpoint Config Drawer
-      document.getElementById('toggleEndpointConfigBtn').addEventListener('click', function() {
-        var dr = document.getElementById('endpointConfigDrawer');
-        dr.style.display = dr.style.display === 'none' ? 'block' : 'none';
-      });
-
-      document.getElementById('saveGasUrlBtn').addEventListener('click', function() {
-        var val = document.getElementById('gasUrlInput').value.trim();
-        PDM_UTILS.setGasEndpointUrl(val);
-        refreshEndpointBadge();
-        showAlert(val ? 'Endpoint Google Apps Script berhasil disimpan.' : 'Menggunakan Dual-Drive Sandbox Engine.', true);
-      });
-
-      document.getElementById('useSandboxBtn').addEventListener('click', function() {
-        PDM_UTILS.setGasEndpointUrl('');
-        refreshEndpointBadge();
-        showAlert('Beralih ke Dual-Drive Sandbox Engine lokal.', true);
       });
 
       // Login Form Submit
