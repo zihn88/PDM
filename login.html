@@ -81,7 +81,7 @@
       <form id="loginForm" autocomplete="off">
         <div class="form-group">
           <label class="form-label" for="usernameInput">Username</label>
-          <input type="text" id="usernameInput" class="form-control" placeholder="Masukkan username (contoh: admin atau muzakki)" required autofocus />
+          <input type="text" id="usernameInput" class="form-control" placeholder="Masukkan username Anda" required autofocus />
         </div>
 
         <div class="form-group">
@@ -99,24 +99,6 @@
           <span>Masuk ke Aplikasi</span>
         </button>
       </form>
-
-      <!-- Quick Demo Credentials Selector (Memudahkan pengujian Administrator & Multi-User) -->
-      <div class="quick-demo-accounts">
-        <div style="font-size:11.5px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;">
-          Akses Cepat Pengujian Role (Klik untuk mengisi):
-        </div>
-        <div class="demo-chip-row">
-          <button type="button" class="demo-chip" data-user="admin" data-pass="Admin@123">
-            Admin (admin / Admin@123)
-          </button>
-          <button type="button" class="demo-chip" data-user="muzakki" data-pass="User@123">
-            User 1: Ahmad Muzakki (muzakki)
-          </button>
-          <button type="button" class="demo-chip" data-user="mubarok" data-pass="User@123">
-            User 2: Ahmad Mubarok (mubarok)
-          </button>
-        </div>
-      </div>
 
       <!-- Backend GAS Endpoint Connection Settings -->
       <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--border-color);">
@@ -200,15 +182,6 @@
         passInput.type = isPass ? 'text' : 'password';
         eyeOpen.style.display = isPass ? 'none' : '';
         eyeClosed.style.display = isPass ? '' : 'none';
-      });
-
-      // Quick Demo Chips
-      document.querySelectorAll('.demo-chip').forEach(function(chip) {
-        chip.addEventListener('click', function() {
-          document.getElementById('usernameInput').value = chip.getAttribute('data-user');
-          document.getElementById('passwordInput').value = chip.getAttribute('data-pass');
-          document.getElementById('loginAlertBox').style.display = 'none';
-        });
       });
 
       // Endpoint Config Drawer
