@@ -21,7 +21,15 @@ window.PDM_UPLOAD = (function() {
       ownerInput.value = user.Nama + ' (@' + user.Username + ')';
     }
 
-    // Muat kategori
+    // Fast-path: isi dropdown kategori seketika dari memory cache jika tersedia
+    var cachedCats = PDM_API.getCached('categories.list', {});
+    if (cachedCats && catSelect && cachedCats.length > 0 && catSelect.children.length === 0) {
+      catSelect.innerHTML = cachedCats.map(function(c) {
+        return '<option value="' + PDM_UTILS.escapeHtml(c.CategoryName) + '">' + PDM_UTILS.escapeHtml(c.CategoryName) + '</option>';
+      }).join('');
+    }
+
+    // Muat kategori (0 ms jika sudah di cache)
     try {
       var cats = await PDM_API.request('categories.list', {});
       if (catSelect && cats.length > 0) {
