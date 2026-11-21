@@ -30,12 +30,20 @@ window.PDM_DOCUMENTS = (function() {
     usersCache: []
   };
 
-  async function refreshFilterMetadata() {
+  async function refreshFilterMetadata(forceFresh) {
     var user = PDM_AUTH.getCachedUser();
+    // Fast-path: jika metadata sudah ada di memory cache, gunakan langsung tanpa jeda (0 ms)
+    if (!forceFresh && _state.categoriesCache && _state.categoriesCache.length > 0) {
+      populateCategoryDropdowns();
+      if (user && user.Role === 'ADMIN' && _state.usersCache && _state.usersCache.length > 0) {
+        populateOwnerDropdown();
+      }
+      return;
+    }
     try {
-      _state.categoriesCache = await PDM_API.request('categories.list', {});
+      _state.categoriesCache = await PDM_API.request('categories.list', {}, { bypassCache: !!forceFresh });
       if (user && user.Role === 'ADMIN') {
-        _state.usersCache = await PDM_API.request('users.list', {});
+        _state.usersCache = await PDM_API.request('users.list', {}, { bypassCache: !!forceFresh });
       }
     } catch (e) {}
     populateCategoryDropdowns();
