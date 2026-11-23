@@ -14,39 +14,43 @@ window.PDM_UPLOAD = (function() {
   async function initUploadView() {
     var user = PDM_AUTH.getCachedUser();
     var ownerInput = document.getElementById('uploadOwnerReadonly');
-    var folderPreviewEl = document.getElementById('uploadTargetFolderPreview');
     var catSelect = document.getElementById('uploadCategorySelect');
 
     if (user && ownerInput) {
       ownerInput.value = user.Nama + ' (@' + user.Username + ')';
     }
 
-    // Fast-path: isi dropdown kategori seketika dari memory cache jika tersedia
-    var cachedCats = PDM_API.getCached('categories.list', {});
+    // 1. Bind event upload & perbarui preview folder SEGERA (sinkron, 0 ms)
+    //    agar tombol/dropzone tidak pernah mati meskipun fetch kategori lambat/gagal
+    if (!_bound) {
+      bindUploadEvents();
+      _bound = true;
+    }
+    updateFolderPathPreview();
+
+    // 2. Fast-path: isi dropdown kategori seketika dari memory cache jika tersedia
+    var cachedCats = (window.PDM_API && typeof PDM_API.getCached === 'function')
+      ? PDM_API.getCached('categories.list', {})
+      : null;
     if (cachedCats && catSelect && cachedCats.length > 0 && catSelect.children.length === 0) {
       catSelect.innerHTML = cachedCats.map(function(c) {
         return '<option value="' + PDM_UTILS.escapeHtml(c.CategoryName) + '">' + PDM_UTILS.escapeHtml(c.CategoryName) + '</option>';
       }).join('');
+      updateFolderPathPreview();
     }
 
-    // Muat kategori (0 ms jika sudah di cache)
+    // 3. Muat kategori (0 ms jika sudah di cache)
     try {
       var cats = await PDM_API.request('categories.list', {});
-      if (catSelect && cats.length > 0) {
+      if (catSelect && cats && cats.length > 0) {
         var cur = catSelect.value;
         catSelect.innerHTML = cats.map(function(c) {
           return '<option value="' + PDM_UTILS.escapeHtml(c.CategoryName) + '">' + PDM_UTILS.escapeHtml(c.CategoryName) + '</option>';
         }).join('');
         if (cur) catSelect.value = cur;
+        updateFolderPathPreview();
       }
     } catch (e) {}
-
-    updateFolderPathPreview();
-
-    if (!_bound) {
-      bindUploadEvents();
-      _bound = true;
-    }
   }
 
   function updateFolderPathPreview() {
@@ -185,10 +189,11 @@ window.PDM_UPLOAD = (function() {
       var checksumHex = await PDM_UTILS.computeSha256Hex(arrayBuf);
       var base64Data = arrayBufferToBase64(arrayBuf);
 
-      // Step 2: Kirim ke Google Drive A (tanpa menggabungkan kegagalan backup)
+      // Step 2: Kirim ke Google Drive A terlebih dahulu (runImmediateBackup: false)
+      //         agar upload utama selesai cepat tanpa tersandera latensi Drive B
       badgeEl.innerHTML = '<span class="badge badge-yellow"><span class="badge-dot"></span>Menyimpan ke Drive A...</span>';
-      upPctEl.textContent = '75%';
-      upBarEl.style.width = '75%';
+      upPctEl.textContent = '70%';
+      upBarEl.style.width = '70%';
 
       var uploadRes = await PDM_API.request('documents.upload', {
         fileName: file.name,
@@ -197,7 +202,7 @@ window.PDM_UPLOAD = (function() {
         category: category,
         description: description,
         clientChecksum: checksumHex,
-        runImmediateBackup: true
+        runImmediateBackup: false
       });
 
       // Upload ke Drive A berhasil 100%!
@@ -205,9 +210,9 @@ window.PDM_UPLOAD = (function() {
       upBarEl.style.width = '100%';
 
       var doc = uploadRes.document;
-      var bkp = uploadRes.backupResult;
 
-      if (doc.BackupStatus === 'SUCCESS' || (bkp && bkp.success)) {
+      // Step 3: Jalankan Auto-Backup ke Google Drive B secara terpisah (non-blocking terhadap Drive A)
+      if (doc.BackupStatus === 'SUCCESS') {
         bkpPctEl.textContent = '100% (Terverifikasi)';
         bkpBarEl.style.width = '100%';
         badgeEl.innerHTML = '<span class="badge badge-green"><span class="badge-dot"></span>Upload &amp; Backup Selesai</span>';
@@ -216,15 +221,42 @@ window.PDM_UPLOAD = (function() {
           '<button class="btn btn-secondary btn-sm" onclick="PDM_AUTH.navigateTo(\'preview\', {documentId:\'' + PDM_UTILS.escapeHtml(doc.DocumentID) + '\', returnView:\'upload\'})">Lihat Preview</button>';
         PDM_UTILS.showToast('Upload & Backup Berhasil', file.name + ' telah tersimpan di Drive A dan otomatis disalin ke Drive B.', 'success');
       } else {
-        // File utama SUDAH tersimpan di Drive A, namun backup ke Drive B gagal / masuk antrean.
-        // Sesuai instruksi: JANGAN mengulang upload file utama, cukup sediakan tombol Ulangi Backup dari Drive A!
-        bkpPctEl.textContent = 'Dalam Antrean Retry';
-        bkpBarEl.style.width = '40%';
-        bkpBarEl.style.background = '#f59e0b';
-        badgeEl.innerHTML = '<span class="badge badge-yellow"><span class="badge-dot"></span>Tersimpan di Drive A (Menunggu Backup Drive B)</span>';
+        bkpPctEl.textContent = 'Menyalin ke Drive B...';
+        bkpBarEl.style.width = '45%';
+        badgeEl.innerHTML = '<span class="badge badge-yellow"><span class="badge-dot"></span>Tersimpan di Drive A &bull; Memproses Backup Drive B...</span>';
         footerEl.innerHTML =
-          '<span style="color:var(--status-yellow-text);">File utama aman di Drive A. Backup Drive B masuk antrean (' + PDM_UTILS.escapeHtml((bkp && bkp.error) || 'Menunggu koneksi Drive B') + ').</span>' +
-          '<button class="btn btn-primary btn-sm" onclick="PDM_UPLOAD.retryBackupOnly(\'' + PDM_UTILS.escapeHtml(doc.DocumentID) + '\', \'' + itemId + '\')">Ulangi Backup Saja</button>';
+          '<span>ID: <code>' + PDM_UTILS.escapeHtml(doc.DocumentID) + '</code> &bull; File utama aman di Drive A. Sedang menyalin ke Drive B...</span>' +
+          '<button class="btn btn-secondary btn-sm" onclick="PDM_AUTH.navigateTo(\'preview\', {documentId:\'' + PDM_UTILS.escapeHtml(doc.DocumentID) + '\', returnView:\'upload\'})">Lihat Preview</button>';
+
+        try {
+          var bkpRes = await PDM_API.request('backup.runSingle', {
+            DocumentID: doc.DocumentID,
+            forceCopy: false
+          });
+          if (bkpRes && bkpRes.success) {
+            bkpPctEl.textContent = '100% (Terverifikasi)';
+            bkpBarEl.style.width = '100%';
+            bkpBarEl.style.background = '#10b981';
+            badgeEl.innerHTML = '<span class="badge badge-green"><span class="badge-dot"></span>Upload &amp; Backup Selesai</span>';
+            footerEl.innerHTML =
+              '<span>ID: <code>' + PDM_UTILS.escapeHtml(doc.DocumentID) + '</code> &bull; Checksum SHA-256 Terverifikasi</span>' +
+              '<button class="btn btn-secondary btn-sm" onclick="PDM_AUTH.navigateTo(\'preview\', {documentId:\'' + PDM_UTILS.escapeHtml(doc.DocumentID) + '\', returnView:\'upload\'})">Lihat Preview</button>';
+            PDM_UTILS.showToast('Upload & Backup Berhasil', file.name + ' telah tersimpan di Drive A dan otomatis disalin ke Drive B.', 'success');
+          } else {
+            throw new Error((bkpRes && bkpRes.error) || 'Menunggu koneksi Drive B');
+          }
+        } catch (bkpErr) {
+          // File utama SUDAH tersimpan di Drive A, namun backup ke Drive B gagal / masuk antrean.
+          // JANGAN mengulang upload file utama, cukup sediakan tombol Ulangi Backup dari Drive A!
+          bkpPctEl.textContent = 'Dalam Antrean Retry';
+          bkpBarEl.style.width = '40%';
+          bkpBarEl.style.background = '#f59e0b';
+          badgeEl.innerHTML = '<span class="badge badge-yellow"><span class="badge-dot"></span>Tersimpan di Drive A (Menunggu Backup Drive B)</span>';
+          footerEl.innerHTML =
+            '<span style="color:var(--status-yellow-text);">File utama aman di Drive A. Backup Drive B masuk antrean (' + PDM_UTILS.escapeHtml(bkpErr.message) + ').</span>' +
+            '<button class="btn btn-primary btn-sm" id="' + itemId + '_retryBtn" onclick="PDM_UPLOAD.retryBackupOnly(\'' + PDM_UTILS.escapeHtml(doc.DocumentID) + '\', \'' + itemId + '\')">Ulangi Backup Saja</button>';
+          PDM_UTILS.showToast('Tersimpan di Drive A', file.name + ' aman di Drive A. Backup Drive B masuk antrean otomatis.', 'warning');
+        }
       }
 
     } catch (err) {
@@ -238,13 +270,22 @@ window.PDM_UPLOAD = (function() {
 
   /**
    * Mengulangi proses backup dari file yang sudah tersimpan di Drive A ke Drive B
-   * TANPA mengunggah ulang file utama.
+   * TANPA mengunggah ulang file utama. Dilengkapi proteksi klik ganda.
    */
+  var _retryingDocs = {};
   async function retryBackupOnly(documentId, cardItemId) {
+    if (_retryingDocs[documentId]) return;
+    _retryingDocs[documentId] = true;
+
     var badgeEl = document.getElementById(cardItemId + '_badge');
     var bkpPctEl = document.getElementById(cardItemId + '_bkpPct');
     var bkpBarEl = document.getElementById(cardItemId + '_bkpBar');
     var footerEl = document.getElementById(cardItemId + '_footer');
+    var retryBtn = document.getElementById(cardItemId + '_retryBtn');
+    if (retryBtn) {
+      retryBtn.disabled = true;
+      retryBtn.textContent = 'Memproses...';
+    }
 
     if (badgeEl) badgeEl.innerHTML = '<span class="badge badge-yellow"><span class="badge-dot"></span>Menyalin dari Drive A ke Drive B...</span>';
     if (bkpPctEl) bkpPctEl.textContent = '65%';
@@ -275,7 +316,13 @@ window.PDM_UPLOAD = (function() {
     } catch (err) {
       if (bkpPctEl) bkpPctEl.textContent = 'Terjadwal di Antrean';
       if (badgeEl) badgeEl.innerHTML = '<span class="badge badge-red"><span class="badge-dot"></span>Retry Gagal</span>';
+      if (retryBtn) {
+        retryBtn.disabled = false;
+        retryBtn.textContent = 'Ulangi Backup Saja';
+      }
       PDM_UTILS.showToast('Backup Masih Tertunda', err.message, 'warning');
+    } finally {
+      delete _retryingDocs[documentId];
     }
   }
 
@@ -288,14 +335,20 @@ window.PDM_UPLOAD = (function() {
     });
   }
 
+  /**
+   * Konversi ArrayBuffer ke Base64 secara chunked (32KB/chunk)
+   * Jauh lebih cepat dan tidak membuat browser freeze pada file 5-15 MB
+   */
   function arrayBufferToBase64(buffer) {
-    var binary = '';
     var bytes = new Uint8Array(buffer);
     var len = bytes.byteLength;
-    for (var i = 0; i < len; i++) {
-      binary += String.fromCharCode(bytes[i]);
+    var chunkSize = 0x8000; // 32KB per chunk
+    var chunks = [];
+    for (var i = 0; i < len; i += chunkSize) {
+      var sub = bytes.subarray(i, Math.min(i + chunkSize, len));
+      chunks.push(String.fromCharCode.apply(null, sub));
     }
-    return btoa(binary);
+    return btoa(chunks.join(''));
   }
 
   return {
