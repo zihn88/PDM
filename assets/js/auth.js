@@ -60,7 +60,9 @@ window.PDM_AUTH = (function() {
 
   /**
    * Memverifikasi sesi di halaman utama (index.html)
-   * dan menerapkan pembatasan menu sesuai Role (ADMIN vs USER)
+   * dan menerapkan pembatasan menu sesuai Role (ADMIN vs USER).
+   * Menggunakan fast-boot dengan cachedUser agar tidak terjadi waterfall 2x request GAS saat startup,
+   * sembari tetap memvalidasi sesi di latar belakang (dan seluruh endpoint backend tetap zero-trust).
    */
   async function guardMainApp() {
     initTheme();
@@ -69,6 +71,21 @@ window.PDM_AUTH = (function() {
     if (!token) {
       window.location.href = 'login.html';
       return null;
+    }
+
+    var cachedUser = getCachedUser();
+    if (cachedUser && cachedUser.UserID && cachedUser.Role) {
+      applyUserToShell(cachedUser);
+      // Verifikasi sesi & sinkronisasi profil terbaru di background (non-blocking)
+      PDM_API.request('auth.me', {}).then(function(me) {
+        if (me && me.user) {
+          localStorage.setItem(PDM_CONFIG.STORAGE_KEYS.SESSION_USER, JSON.stringify(me.user));
+          applyUserToShell(me.user);
+        }
+      }).catch(function(err) {
+        // Jika UNAUTHORIZED, api.js sudah otomatis mengarahkan ke login.html?expired=1
+      });
+      return cachedUser;
     }
 
     try {
@@ -114,16 +131,16 @@ window.PDM_AUTH = (function() {
       el.style.display = isAdmin ? '' : 'none';
     });
 
-    // Update indikator koneksi (Live GAS vs Local GAS Emulator)
+    // Update indikator koneksi (Live GAS vs Belum Dikonfigurasi di config.js)
     var connText = document.getElementById('connectionModeText');
     var connDot = document.getElementById('connectionPulseDot');
     if (connText) {
       if (PDM_UTILS.isLiveGasMode()) {
-        connText.textContent = 'Google Apps Script Connected';
+        connText.textContent = 'Cloud Connected (GAS)';
         if (connDot) connDot.className = 'pulse-dot';
       } else {
-        connText.textContent = 'Dual-Drive Sandbox Engine';
-        if (connDot) connDot.className = 'pulse-dot';
+        connText.textContent = 'Mode Lokal (Isi GAS_WEB_APP_URL di config.js)';
+        if (connDot) connDot.className = 'pulse-dot warning';
       }
     }
   }
