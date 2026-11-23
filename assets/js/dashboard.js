@@ -9,19 +9,43 @@
 
 window.PDM_DASHBOARD = (function() {
 
-  async function loadDashboard() {
+  async function loadDashboard(forceFresh) {
     var container = document.getElementById('dashboardContentContainer');
     if (!container) return;
 
+    // Fast-path: render instan jika sudah ada data di cache memori (0 ms)
+    var cached = (window.PDM_API && typeof PDM_API.getCached === 'function')
+      ? PDM_API.getCached('dashboard.stats', {})
+      : null;
+
+    if (cached && !forceFresh) {
+      if (!container.innerHTML.trim()) {
+        renderDashboard(container, cached);
+      }
+    } else if (!container.innerHTML.trim()) {
+      container.innerHTML =
+        '<div class="card"><div class="empty-state" style="padding:36px 16px;">' +
+          '<p style="color:var(--text-secondary);font-weight:600;">Memuat ringkasan dashboard...</p>' +
+        '</div></div>';
+    }
+
     try {
-      var stats = await PDM_API.request('dashboard.stats', {});
+      var stats = await PDM_API.request('dashboard.stats', {}, {
+        bypassCache: !!forceFresh,
+        revalidate: true,
+        onRevalidate: function(freshStats) {
+          renderDashboard(container, freshStats);
+        }
+      });
       renderDashboard(container, stats);
     } catch (err) {
-      container.innerHTML =
-        '<div class="card"><div class="empty-state">' +
-          '<p style="color:var(--status-red-text);font-weight:700;">Gagal memuat statistik dashboard: ' + PDM_UTILS.escapeHtml(err.message) + '</p>' +
-          '<button class="btn btn-primary btn-sm" style="margin-top:12px;" onclick="PDM_DASHBOARD.loadDashboard()">Coba Lagi</button>' +
-        '</div></div>';
+      if (!container.innerHTML.trim() || container.querySelector('.empty-state')) {
+        container.innerHTML =
+          '<div class="card"><div class="empty-state">' +
+            '<p style="color:var(--status-red-text);font-weight:700;">Gagal memuat statistik dashboard: ' + PDM_UTILS.escapeHtml(err.message) + '</p>' +
+            '<button class="btn btn-primary btn-sm" style="margin-top:12px;" onclick="PDM_DASHBOARD.loadDashboard(true)">Coba Lagi</button>' +
+          '</div></div>';
+      }
     }
   }
 
