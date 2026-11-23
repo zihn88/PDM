@@ -298,10 +298,94 @@ window.PDM_API = (function() {
     }
   }
 
+  // ============================================================================
+  // SMART IN-MEMORY CACHE (STALE-WHILE-REVALIDATE)
+  // Menghadirkan respon instan (0 ms) saat berpindah antar menu
+  // ============================================================================
+  var _memoryCache = {};
+  var _inFlightRequests = {};
+
+  var CACHEABLE_ACTIONS = {
+    'dashboard.stats': 45000,       // 45 detik
+    'categories.list': 300000,      // 5 menit
+    'users.list': 120000,           // 2 menit
+    'documents.list': 30000,        // 30 detik
+    'settings.get': 120000,         // 2 menit
+    'backup.status': 30000          // 30 detik
+  };
+
+  function getCacheKey(action, payload) {
+    var pStr = '';
+    if (payload && typeof payload === 'object') {
+      try {
+        pStr = JSON.stringify(payload);
+      } catch (e) {}
+    }
+    return action + '::' + pStr;
+  }
+
+  function getFromMemoryCache(action, payload) {
+    var key = getCacheKey(action, payload);
+    var entry = _memoryCache[key];
+    if (!entry) return null;
+    var now = Date.now();
+    if (now - entry.timestamp > entry.ttl) {
+      delete _memoryCache[key];
+      return null;
+    }
+    return entry.data;
+  }
+
+  function setMemoryCache(action, payload, data) {
+    var ttl = CACHEABLE_ACTIONS[action];
+    if (!ttl) return;
+    var key = getCacheKey(action, payload);
+    _memoryCache[key] = {
+      data: data,
+      timestamp: Date.now(),
+      ttl: ttl
+    };
+  }
+
+  function invalidateCache(pattern) {
+    if (!pattern) {
+      _memoryCache = {};
+      return;
+    }
+    var keys = Object.keys(_memoryCache);
+    for (var i = 0; i < keys.length; i++) {
+      if (keys[i].indexOf(pattern) !== -1) {
+        delete _memoryCache[keys[i]];
+      }
+    }
+  }
+
+  function autoInvalidateOnMutation(action) {
+    if (!action) return;
+    if (action.indexOf('documents.upload') === 0 || action.indexOf('documents.update') === 0 || action.indexOf('archive.') === 0 || action.indexOf('backup.') === 0) {
+      invalidateCache('documents.list');
+      invalidateCache('dashboard.stats');
+      invalidateCache('backup.status');
+    } else if (action.indexOf('categories.') === 0) {
+      invalidateCache('categories.list');
+      invalidateCache('documents.list');
+    } else if (action.indexOf('users.') === 0) {
+      invalidateCache('users.list');
+      invalidateCache('dashboard.stats');
+    } else if (action.indexOf('settings.') === 0) {
+      invalidateCache('settings.get');
+      invalidateCache('dashboard.stats');
+    } else if (action === 'auth.logout' || action === 'auth.login') {
+      _memoryCache = {};
+      _inFlightRequests = {};
+    }
+  }
+
   /**
-   * Fungsi utama pemanggil endpoint API (otomatis memilih Live GAS atau Local Emulator)
+   * Eksekusi request segar ke server live GAS atau emulator lokal
+   * Dilengkapi AbortController timeout agar loading tidak pernah menggantung tanpa batas
    */
-  async function request(action, payload) {
+  async function fetchFresh(action, payload) {
     var token = localStorage.getItem(PDM_CONFIG.STORAGE_KEYS.SESSION_TOKEN) || '';
     var reqBody = {
       action: action,
@@ -311,35 +395,114 @@ window.PDM_API = (function() {
 
     if (PDM_UTILS.isLiveGasMode()) {
       var endpointUrl = PDM_UTILS.getGasEndpointUrl();
-      var response = await fetch(endpointUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'text/plain;charset=utf-8'
-        },
-        body: JSON.stringify(reqBody),
-        redirect: 'follow'
-      });
+      var isHeavyAction = (action === 'documents.upload' || action.indexOf('backup.') === 0 || action === 'documents.preview');
+      var timeoutMs = isHeavyAction ? 120000 : 45000;
+      var controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+      var timerId = null;
 
-      if (!response.ok) {
-        throw new Error('Koneksi ke Backend GAS gagal (HTTP ' + response.status + ').');
+      if (controller) {
+        timerId = setTimeout(function() {
+          controller.abort();
+        }, timeoutMs);
       }
 
-      var json = await response.json();
-      if (!json.success) {
-        if (json.errorCode === 'UNAUTHORIZED') {
-          localStorage.removeItem(PDM_CONFIG.STORAGE_KEYS.SESSION_TOKEN);
-          localStorage.removeItem(PDM_CONFIG.STORAGE_KEYS.SESSION_USER);
-          if (window.location.pathname.indexOf('login.html') === -1) {
-            window.location.href = 'login.html?expired=1';
-          }
+      try {
+        var fetchOpts = {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'text/plain;charset=utf-8'
+          },
+          body: JSON.stringify(reqBody),
+          redirect: 'follow'
+        };
+        if (controller) fetchOpts.signal = controller.signal;
+
+        var response = await fetch(endpointUrl, fetchOpts);
+        if (timerId) clearTimeout(timerId);
+
+        if (!response.ok) {
+          throw new Error('Koneksi ke Backend GAS gagal (HTTP ' + response.status + ').');
         }
-        throw new Error(json.error || 'Terjadi kesalahan pada server GAS.');
+
+        var json = await response.json();
+        if (!json.success) {
+          if (json.errorCode === 'UNAUTHORIZED') {
+            _memoryCache = {};
+            localStorage.removeItem(PDM_CONFIG.STORAGE_KEYS.SESSION_TOKEN);
+            localStorage.removeItem(PDM_CONFIG.STORAGE_KEYS.SESSION_USER);
+            if (window.location.pathname.indexOf('login.html') === -1) {
+              window.location.href = 'login.html?expired=1';
+            }
+          }
+          throw new Error(json.error || 'Terjadi kesalahan pada server GAS.');
+        }
+        return json.data;
+      } catch (err) {
+        if (timerId) clearTimeout(timerId);
+        if (err && err.name === 'AbortError') {
+          throw new Error('Server Google Apps Script belum merespons dalam batas waktu. Silakan coba lagi.');
+        }
+        throw err;
       }
-      return json.data;
     }
 
     // Eksekusi melalui Local GAS Emulator Engine
     return executeEmulatorAction(action, token, payload || {});
+  }
+
+  /**
+   * Fungsi utama pemanggil endpoint API (dengan Smart Memory Cache,
+   * In-Flight Request Deduplication, & Stale-While-Revalidate)
+   */
+  async function request(action, payload, options) {
+    options = options || {};
+    var isCacheable = !!CACHEABLE_ACTIONS[action] && !options.bypassCache;
+    var cacheKey = getCacheKey(action, payload);
+
+    // Fast-path: jika data tersedia di cache memori, kembalikan INSTAN (0 ms)
+    if (isCacheable) {
+      var cached = getFromMemoryCache(action, payload);
+      if (cached !== null) {
+        // Revalidasi di latar belakang jika diminta (dengan deduplikasi)
+        if (options.revalidate && !_inFlightRequests[cacheKey]) {
+          _inFlightRequests[cacheKey] = fetchFresh(action, payload).then(function(freshData) {
+            setMemoryCache(action, payload, freshData);
+            if (typeof options.onRevalidate === 'function') {
+              options.onRevalidate(freshData);
+            }
+            return freshData;
+          }).catch(function() {
+            return cached;
+          }).finally(function() {
+            delete _inFlightRequests[cacheKey];
+          });
+        }
+        return cached;
+      }
+
+      // Deduplikasi request identik yang sedang berjalan agar tidak dobel hit ke GAS
+      if (_inFlightRequests[cacheKey]) {
+        return _inFlightRequests[cacheKey];
+      }
+    }
+
+    var promise = fetchFresh(action, payload).then(function(result) {
+      if (isCacheable) {
+        setMemoryCache(action, payload, result);
+      } else {
+        autoInvalidateOnMutation(action);
+      }
+      return result;
+    });
+
+    if (isCacheable) {
+      _inFlightRequests[cacheKey] = promise;
+      promise.finally(function() {
+        delete _inFlightRequests[cacheKey];
+      });
+    }
+
+    return promise;
   }
 
   /**
@@ -1346,6 +1509,9 @@ window.PDM_API = (function() {
 
   return {
     request: request,
+    getCached: getFromMemoryCache,
+    invalidateCache: invalidateCache,
+    clearCache: function() { _memoryCache = {}; },
     executeEmulatorAction: executeEmulatorAction,
     loadEmulatorDb: loadEmulatorDb,
     saveEmulatorDb: saveEmulatorDb
