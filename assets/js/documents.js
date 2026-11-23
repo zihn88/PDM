@@ -80,7 +80,8 @@ window.PDM_DOCUMENTS = (function() {
   async function openMyDocumentsView() {
     _state.mode = 'ACTIVE';
     _state.page = 1;
-    await refreshFilterMetadata();
+    // Jalankan metadata filter secara paralel (non-blocking) agar tabel langsung dimuat
+    refreshFilterMetadata();
     await fetchAndRenderTable('myDocsTableContainer', {
       status: 'ACTIVE',
       query: (document.getElementById('myDocsQuickSearch') || {}).value || '',
@@ -99,7 +100,7 @@ window.PDM_DOCUMENTS = (function() {
   async function openSearchView() {
     _state.mode = 'SEARCH';
     _state.page = 1;
-    await refreshFilterMetadata();
+    refreshFilterMetadata();
     await runAdvancedSearch(1);
   }
 
@@ -137,7 +138,7 @@ window.PDM_DOCUMENTS = (function() {
   async function openArchiveView() {
     _state.mode = 'ARCHIVE';
     _state.page = 1;
-    await refreshFilterMetadata();
+    refreshFilterMetadata();
     await fetchAndRenderTable('archiveTableContainer', {
       status: 'ARCHIVED',
       query: (document.getElementById('archiveQuickSearch') || {}).value || '',
@@ -154,6 +155,16 @@ window.PDM_DOCUMENTS = (function() {
   async function fetchAndRenderTable(containerId, filterParams) {
     var container = document.getElementById(containerId);
     if (!container) return;
+
+    var hasCached = (window.PDM_API && typeof PDM_API.getCached === 'function')
+      ? !!PDM_API.getCached('documents.list', filterParams)
+      : false;
+    if (!hasCached && !container.innerHTML.trim()) {
+      container.innerHTML =
+        '<div class="empty-state" style="padding:32px 16px;">' +
+          '<p style="color:var(--text-secondary);font-weight:600;">Memuat daftar dokumen...</p>' +
+        '</div>';
+    }
 
     try {
       var res = await PDM_API.request('documents.list', filterParams);
