@@ -9,9 +9,35 @@
 
 window.PDM_DASHBOARD = (function() {
 
+  var _loadSeq = 0;
+  var _lastRenderSig = '';
+
+  function buildRenderSignature(stats) {
+    if (!stats) return '';
+    return [
+      stats.role,
+      stats.isEmpty ? '1' : '0',
+      stats.totalDocuments || 0,
+      stats.totalAllDocuments || 0,
+      stats.totalUsers || 0,
+      stats.activeUsers || 0,
+      stats.totalCapacityBytes || 0,
+      stats.backupSuccess || 0,
+      stats.backupFailed || 0,
+      stats.backupPending || 0,
+      stats.totalArchived || 0,
+      (stats.recentDocuments || []).length,
+      (stats.recentActivities || []).length,
+      (stats.driveAStatus && stats.driveAStatus.status) || '',
+      (stats.driveBStatus && stats.driveBStatus.status) || ''
+    ].join('|');
+  }
+
   async function loadDashboard(forceFresh) {
     var container = document.getElementById('dashboardContentContainer');
     if (!container) return;
+
+    var seq = ++_loadSeq;
 
     // Fast-path: render instan jika sudah ada data di cache memori (0 ms)
     var cached = (window.PDM_API && typeof PDM_API.getCached === 'function')
@@ -19,10 +45,10 @@ window.PDM_DASHBOARD = (function() {
       : null;
 
     if (cached && !forceFresh) {
-      if (!container.innerHTML.trim()) {
-        renderDashboard(container, cached);
-      }
-    } else if (!container.innerHTML.trim()) {
+      renderDashboard(container, cached);
+    } else if (!container.innerHTML.trim() || container.getAttribute('data-state') === 'error') {
+      container.setAttribute('data-state', 'loading');
+      _lastRenderSig = '';
       container.innerHTML =
         '<div class="card"><div class="empty-state" style="padding:36px 16px;">' +
           '<p style="color:var(--text-secondary);font-weight:600;">Memuat ringkasan dashboard...</p>' +
@@ -34,12 +60,19 @@ window.PDM_DASHBOARD = (function() {
         bypassCache: !!forceFresh,
         revalidate: true,
         onRevalidate: function(freshStats) {
+          // Abaikan jika sudah ada navigasi/request baru (anti race condition)
+          if (seq !== _loadSeq) return;
           renderDashboard(container, freshStats);
         }
       });
+      if (seq !== _loadSeq) return;
       renderDashboard(container, stats);
     } catch (err) {
-      if (!container.innerHTML.trim() || container.querySelector('.empty-state')) {
+      if (seq !== _loadSeq) return;
+      var curState = container.getAttribute('data-state');
+      if (!container.innerHTML.trim() || curState === 'loading' || curState === 'error') {
+        container.setAttribute('data-state', 'error');
+        _lastRenderSig = '';
         container.innerHTML =
           '<div class="card"><div class="empty-state">' +
             '<p style="color:var(--status-red-text);font-weight:700;">Gagal memuat statistik dashboard: ' + PDM_UTILS.escapeHtml(err.message) + '</p>' +
@@ -50,6 +83,15 @@ window.PDM_DASHBOARD = (function() {
   }
 
   function renderDashboard(container, stats) {
+    if (!stats) return;
+
+    var sig = buildRenderSignature(stats);
+    if (sig && sig === _lastRenderSig && container.innerHTML.trim()) {
+      // Data identik: hindari re-render DOM & layout thrashing
+      return;
+    }
+    _lastRenderSig = sig;
+
     var isAdmin = (stats.role === 'ADMIN');
 
     // Update badge counter pada sidebar
@@ -57,6 +99,16 @@ window.PDM_DASHBOARD = (function() {
     if (navDocCount) navDocCount.textContent = stats.totalDocuments || 0;
     var navArchiveCount = document.getElementById('navArchiveBadge');
     if (navArchiveCount) navArchiveCount.textContent = stats.totalArchived || 0;
+
+    // FAST EMPTY STATE (PRD Bagian 9): Saat database kosong, langsung tampilkan Empty State
+    // tanpa merender grafik kosong atau tabel berat yang tidak diperlukan.
+    if (stats.isEmpty === true || Number(stats.totalAllDocuments || 0) === 0) {
+      container.setAttribute('data-state', 'empty');
+      container.innerHTML = renderEmptyDashboardState(stats, isAdmin);
+      return;
+    }
+
+    container.setAttribute('data-state', 'ready');
 
     var html = '';
 
@@ -224,6 +276,61 @@ window.PDM_DASHBOARD = (function() {
       '</div>';
 
     container.innerHTML = html;
+  }
+
+  function renderEmptyDashboardState(stats, isAdmin) {
+    var html = '';
+
+    // Jika Admin dan status Drive sudah tersedia dari cache, tampilkan ringkasan status koneksi
+    if (isAdmin && stats.driveAStatus && stats.driveBStatus) {
+      var dA = stats.driveAStatus;
+      var dB = stats.driveBStatus;
+      html +=
+        '<div class="drive-status-grid" style="margin-bottom:16px;">' +
+          '<div class="drive-card">' +
+            '<div class="drive-card-top">' +
+              '<div class="drive-title-group"><span class="drive-badge-role">PRIMARY STORAGE</span><strong style="font-size:14px;">Google Drive A</strong></div>' +
+              (dA.connected
+                ? '<span class="badge badge-green"><span class="badge-dot"></span>Terhubung</span>'
+                : '<span class="badge badge-yellow"><span class="badge-dot"></span>Belum Diuji</span>') +
+            '</div>' +
+          '</div>' +
+          '<div class="drive-card drive-b">' +
+            '<div class="drive-card-top">' +
+              '<div class="drive-title-group"><span class="drive-badge-role" style="background:var(--status-green-bg);color:var(--status-green-text);">BACKUP VAULT</span><strong style="font-size:14px;">Google Drive B</strong></div>' +
+              (dB.connected
+                ? '<span class="badge badge-green"><span class="badge-dot"></span>Terhubung</span>'
+                : '<span class="badge badge-yellow"><span class="badge-dot"></span>Belum Diuji</span>') +
+            '</div>' +
+          '</div>' +
+        '</div>';
+    }
+
+    html +=
+      '<div class="card">' +
+        '<div class="empty-state" style="padding:48px 20px;max-width:560px;margin:0 auto;">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="width:56px;height:56px;color:var(--primary-500);opacity:0.85;margin-bottom:14px;">' +
+            '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>' +
+            '<polyline points="14 2 14 8 20 8"/>' +
+            '<line x1="12" y1="18" x2="12" y2="12"/>' +
+            '<line x1="9" y1="15" x2="15" y2="15"/>' +
+          '</svg>' +
+          '<h3 style="font-size:18px;font-weight:800;color:var(--text-primary);margin-bottom:8px;">Belum Ada Dokumen Tersimpan</h3>' +
+          '<p style="font-size:13.5px;color:var(--text-secondary);line-height:1.6;margin-bottom:20px;">' +
+            (isAdmin
+              ? 'Database dokumen masih kosong (' + (stats.activeUsers || 1) + ' pengguna aktif terdaftar). Unggah dokumen pertama Anda ke Google Drive A untuk mulai mengaktifkan statistik dan auto-backup satu arah ke Google Drive B.'
+              : 'Ruang penyimpanan pribadi Anda masih kosong. Unggah dokumen PDF, JPG, JPEG, atau PNG pertama Anda untuk mulai menyimpan dengan perlindungan auto-backup ke Google Drive B.') +
+          '</p>' +
+          '<div style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;">' +
+            '<button type="button" class="btn btn-primary" onclick="PDM_AUTH.navigateTo(\'upload\')">+ Upload Dokumen Pertama</button>' +
+            (isAdmin
+              ? '<button type="button" class="btn btn-secondary" onclick="PDM_AUTH.navigateTo(\'settings\')">Pengaturan Drive A &amp; B</button>'
+              : '') +
+          '</div>' +
+        '</div>' +
+      '</div>';
+
+    return html;
   }
 
   function buildStatCard(label, value, meta, colorClass, svgIcon) {
